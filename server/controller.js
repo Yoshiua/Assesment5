@@ -2,9 +2,9 @@ require('dotenv').config()
 
 const { Sequelize } = require('sequelize');
 
-const { CONECTION_STRING } = process.env;
+const { CONNECTION_STRING } = process.env;
 
-const sequelize = new Sequelize(CONECTION_STRING, {
+const sequelize = new Sequelize(CONNECTION_STRING, {
     dialect: 'postgres',
     dialectOptions: {
         ssl: {
@@ -31,11 +31,6 @@ module.exports = {
                 country_id integer references countries(country_id)
             );
             
-            INSERT INTO cities (name)
-            values ('Las Vegas'),
-            ('New York'),
-            ('Los Angeles');
-
             insert into countries (name)
             values ('Afghanistan'),
             ('Albania'),
@@ -232,27 +227,39 @@ module.exports = {
             ('Yemen'),
             ('Zambia'),
             ('Zimbabwe');
-        `).then(() => {
-            console.log('DB seeded!')
-            res.sendStatus(200)
-        }).catch(err => console.log('error seeding DB', err))
-    },
-    
-    
-
+            
+            INSERT INTO cities (name, rating, country_id)
+            values ('Las Vegas', 4, 187),
+            ('New York', 3, 187),
+            ('Los Angeles', 0, 187);
+            `).then(() => {
+                console.log('DB seeded!')
+                res.sendStatus(200)
+            }).catch(err => console.log('error seeding DB', err))
+        },
+        
+        createCity: (req, res) => {
+            const { name, rating, countryId } = req.body
+            sequelize.query(`
+            INSERT INTO cities (name, rating, country_id)
+            VALUES ('${name}', ${rating}, ${countryId});
+            `).then(dbRes => res.status(200).send(dbRes[0]))
+            .catch(err => console.log('error creating city', err))
+        },
+        
+        
         getCountries: (req, res) => {
             sequelize.query(`
-            SELECT cities.
-            
+            SELECT * FROM countries
             `).then(dbRes => res.status(200).send(dbRes[0]))
-    },
-
+        },
+        
         getCities: (req, res) => {
             sequelize.query(`
             SELECT cities.city_id, cities.name AS city, cities.rating, countries.name AS country
             FROM cities
-            JOIN countries ON cities.country_id = countries.country_id;
-            ORDER BY cities.rating DESC;
+            JOIN countries ON cities.country_id = countries.country_id
+            ORDER BY cities.rating DESC
             `).then(dbRes => res.status(200).send(dbRes[0]))
             .catch(err => console.log('error getting cities', err))
     },
@@ -263,5 +270,6 @@ module.exports = {
             `).then(dbRes => res.status(200).send(dbRes[0]))
             .catch(err => console.log('error deleting city', err))
         }
+
 }
     
